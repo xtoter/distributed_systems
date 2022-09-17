@@ -65,13 +65,13 @@ func calculatematrixnew(matrix1, matrix2 [][]float64) [][]float64 {
 	//printmatrix(result1)
 	return result1
 }
-func newcalculatematrix(matrix1, matrix2 [][]float64, c chan [][]float64) {
+func newcalculatematrix(rec int, matrix1, matrix2 [][]float64, c chan [][]float64) {
 	var result1 [][]float64
 	for k := 0; k < len(matrix1); k++ {
 		temp := make([]float64, len(matrix2[0]), len(matrix2[0]))
 		result1 = append(result1, temp)
 	}
-	if len(matrix1) > 65 {
+	if rec < 1 {
 		aa := cutmatrix(matrix1, 0, len(matrix1)/2, 0, len(matrix1[0])/2)
 		ab := cutmatrix(matrix1, 0, len(matrix1)/2, len(matrix1[0])/2, len(matrix1[0]))
 		ac := cutmatrix(matrix1, len(matrix1)/2, len(matrix1), 0, len(matrix1[0])/2)
@@ -81,14 +81,15 @@ func newcalculatematrix(matrix1, matrix2 [][]float64, c chan [][]float64) {
 		bc := cutmatrix(matrix2, len(matrix2)/2, len(matrix2), 0, len(matrix2[0])/2)
 		bd := cutmatrix(matrix2, len(matrix2)/2, len(matrix2), len(matrix2[0])/2, len(matrix2[0]))
 		t1, t2, t3, t4, n1, n2, n3, n4 := make(chan [][]float64), make(chan [][]float64), make(chan [][]float64), make(chan [][]float64), make(chan [][]float64), make(chan [][]float64), make(chan [][]float64), make(chan [][]float64)
-		go newcalculatematrix(aa, ba, t1)
-		go newcalculatematrix(ab, bc, n1)
-		go newcalculatematrix(aa, bb, t2)
-		go newcalculatematrix(ab, bd, n2)
-		go newcalculatematrix(ac, ba, t3)
-		go newcalculatematrix(ad, bc, n3)
-		go newcalculatematrix(ad, bd, t4)
-		go newcalculatematrix(ac, bb, n4)
+		go newcalculatematrix(rec+1, aa, ba, t1)
+		go newcalculatematrix(rec+1, ab, bc, n1)
+		go newcalculatematrix(rec+1, aa, bb, t2)
+		go newcalculatematrix(rec+1, ab, bd, n2)
+		//N1, N2, N3, N4 := <-t1, <-n1, <-t2, <-n2
+		go newcalculatematrix(rec+1, ac, ba, t3)
+		go newcalculatematrix(rec+1, ad, bc, n3)
+		go newcalculatematrix(rec+1, ad, bd, t4)
+		go newcalculatematrix(rec+1, ac, bb, n4)
 		result1 = summatrix(<-t1, <-n1, <-t2, <-n2, <-t3, <-n3, <-t4, <-n4)
 	} else {
 		result1 = calculatematrixnew(matrix1, matrix2)
@@ -132,7 +133,7 @@ func main() {
 		result = append(result, temp)
 	}
 	res := make(chan [][]float64)
-	go newcalculatematrix(matrix1, matrix2, res)
+	go newcalculatematrix(0, matrix1, matrix2, res)
 	printmatrix(<-res)
 	out.Flush()
 }
